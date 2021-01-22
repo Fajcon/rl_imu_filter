@@ -33,7 +33,7 @@ public class Position
 
     public void SavePositionToFile()
     {
-        System.IO.File.WriteAllText("estimate_position_and_rotation.csv", _output);
+        System.IO.File.WriteAllText("Assets/Results/estimate_position_and_rotation.csv", _output);
     }
 
     public Position()

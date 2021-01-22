@@ -625,10 +625,8 @@ MonoBehaviour:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
   MaxStep: 5000
-  limit: 10
   speed: 1
   rotationSpeed: 180
-  textMeshPro: {fileID: 0}
 --- !u!114 &1280983729
 MonoBehaviour:
   m_ObjectHideFlags: 0

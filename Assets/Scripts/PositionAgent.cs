@@ -1,5 +1,8 @@
 ﻿﻿
 using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
@@ -7,6 +10,7 @@ using Random = System.Random;
 
 public class PositionAgent : Agent
 {
+    private bool useDataFromCsv = true;
     private Vector3 g = new Vector3(0, 9.80665f, 0);
     
     public float speed = 1;
@@ -30,9 +34,45 @@ public class PositionAgent : Agent
     {
         ResetEnvironment();
     }
-    
+
+    private List<Vector3> _accfromFile;
+    private List<Vector3> _angularVelocityFromFile;
+    private int _index = 0;
+    private void ReadDataFromCsv()
+    {
+        _accfromFile = new List<Vector3>();
+        _angularVelocityFromFile = new List<Vector3>();
+        var reader = new StreamReader("Assets/Results/accelGyro.csv");
+        while (!reader.EndOfStream)
+        {
+            var line = reader.ReadLine();
+            if (line == null) continue;
+            
+            var values = line.Split(',');
+            
+            if (values.Length >= 2)
+            {
+                _angularVelocityFromFile.Add(new Vector3(
+                    float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat),
+                    float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat),
+                    float.Parse(values[3], CultureInfo.InvariantCulture.NumberFormat)));
+                _accfromFile.Add(new Vector3(
+                    float.Parse(values[4], CultureInfo.InvariantCulture.NumberFormat),
+                    float.Parse(values[5], CultureInfo.InvariantCulture.NumberFormat),
+                    float.Parse(values[6], CultureInfo.InvariantCulture.NumberFormat)) * 9.8f);
+            }
+        }
+    }
+
     private void ResetEnvironment()
     {
+        if (useDataFromCsv)
+        {
+            _index = 0;
+            ReadDataFromCsv();
+            _position = new Position();
+        }
+
         _oldVelocity = Vector3.zero;
         
         _randX = UnityEngine.Random.Range(-10, 10);
@@ -51,27 +91,46 @@ public class PositionAgent : Agent
 
     public override void CollectObservations(VectorSensor sensor)
     {
-       // acc
-        _velocity = (transform.position - _oldPosition) / Time.deltaTime;
-        Vector3 acc = (_velocity - _oldVelocity) / Time.deltaTime + g;
-        Quaternion q = transform.rotation;
-        _bodyAcc = q * acc;
+        if (useDataFromCsv)
+        {
+            if (_index >= _accfromFile.Count)
+            {
+                _position.SavePositionToFile();
+                _index = 0;
+                UnityEditor.EditorApplication.isPlaying = false; //only in editor
+            }
+            _accWithNoise = _accfromFile[_index];
+            _angularVelocityWithNoise = _angularVelocityFromFile[_index];
+            _index++;
+        }
+        else
+        {
+            // acc
+            _velocity = (transform.position - _oldPosition) / Time.deltaTime;
+            Vector3 acc = (_velocity - _oldVelocity) / Time.deltaTime + g;
+            Quaternion q = transform.rotation;
+            _bodyAcc = q * acc;
     
-        //Omega
-        _rotation = transform.rotation;
-        Quaternion deltaRotation = _rotation * Quaternion.Inverse(_oldRotation);
-        deltaRotation.ToAngleAxis(out _magnitude, out _axis);
+            //Omega
+            _rotation = transform.rotation;
+            Quaternion deltaRotation = _rotation * Quaternion.Inverse(_oldRotation);
+            deltaRotation.ToAngleAxis(out _magnitude, out _axis);
     
-        _accWithNoise = new Vector3(
-            (float) (_bodyAcc.x + SampleGaussian(0.0, stddev, new Random())),
-            (float) (_bodyAcc.y + SampleGaussian(0.0, stddev, new Random())),
-            (float) (_bodyAcc.z + SampleGaussian(0.0, stddev, new Random())));
+            _accWithNoise = new Vector3(
+                (float) (_bodyAcc.x + SampleGaussian(0.0, stddev, new Random())),
+                (float) (_bodyAcc.y + SampleGaussian(0.0, stddev, new Random())),
+                (float) (_bodyAcc.z + SampleGaussian(0.0, stddev, new Random())));
     
-        _angularVelocityWithNoise = new Vector3(
-            (float) (AngularVelocity.x + SampleGaussian(0.0, 0.1, new Random())),
-            (float) (AngularVelocity.y + SampleGaussian(0.0, 0.1, new Random())),
-            (float) (AngularVelocity.z + SampleGaussian(0.0, 0.1, new Random())));
-    
+            _angularVelocityWithNoise = new Vector3(
+                (float) (AngularVelocity.x + SampleGaussian(0.0, 0.1, new Random())),
+                (float) (AngularVelocity.y + SampleGaussian(0.0, 0.1, new Random())),
+                (float) (AngularVelocity.z + SampleGaussian(0.0, 0.1, new Random())));
+            
+            _oldPosition = transform.position;
+            _oldVelocity = _velocity;
+            _oldRotation = _rotation;
+        }
+        
         if (!float.IsNaN(_accWithNoise.x))
         {
             sensor.AddObservation(_accWithNoise);
@@ -82,10 +141,6 @@ public class PositionAgent : Agent
             sensor.AddObservation(Vector3.zero);
             sensor.AddObservation(Vector3.zero);
         }
-    
-        _oldPosition = transform.position;
-        _oldVelocity = _velocity;
-        _oldRotation = _rotation;
     }
 
     public override void OnActionReceived(float[] vectorAction)
@@ -100,19 +155,24 @@ public class PositionAgent : Agent
         AddReward(-Vector3.Distance(_bodyAcc, estimateBodyAcc));
         AddReward(-Vector3.Distance(AngularVelocity, estimateAngularVelocity));
         
+        if (useDataFromCsv)
+        {
+            // calculating position
+            _position.EstimateAngularVelocity = estimateAngularVelocity;
+            _position.EstimateBodyAcc = estimateBodyAcc;
         
-        // calculating position
-        _position.EstimateAngularVelocity = estimateAngularVelocity;
-        _position.EstimateBodyAcc = estimateBodyAcc;
-        
-        _position.CalculatePosition();
-        
+            _position.CalculatePosition();
+        }
+
     }
 
     private void FixedUpdate()
     {
         // ControlAgent();
-        MoveAgent();
+        if (!useDataFromCsv)
+        {
+            MoveAgent();
+        }
         RequestDecision();
         RequestAction();
     }
