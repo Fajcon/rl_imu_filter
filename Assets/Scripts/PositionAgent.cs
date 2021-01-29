@@ -10,7 +10,7 @@ using Random = System.Random;
 
 public class PositionAgent : Agent
 {
-    private bool useDataFromCsv = false;
+    private bool useDataFromCsv = true;
     private Vector3 g = new Vector3(0, 9.80665f, 0);
     
     public float speed = 1;
@@ -38,12 +38,6 @@ public class PositionAgent : Agent
     private List<Vector3> _accfromFile;
     private List<Vector3> _angularVelocityFromFile;
     private int _index = 0;
-
-    private string _input;
-    private string _output;
-
-    private int _episodeIndex = -1;
-    
     private void ReadDataFromCsv()
     {
         _accfromFile = new List<Vector3>();
@@ -136,21 +130,6 @@ public class PositionAgent : Agent
             _oldVelocity = _velocity;
             _oldRotation = _rotation;
         }
-
-        var statsRecorder = Academy.Instance.StatsRecorder;
-        statsRecorder.Add("Input/Acc/x", _accWithNoise.x);
-        statsRecorder.Add("Input/Acc/y", _accWithNoise.y);
-        statsRecorder.Add("Input/Acc/z", _accWithNoise.z);
-        statsRecorder.Add("Input/AngularVelocity/x", _angularVelocityWithNoise.x);
-        statsRecorder.Add("Input/AngularVelocity/y", _angularVelocityWithNoise.y);
-        statsRecorder.Add("Input/AngularVelocity/z", _angularVelocityWithNoise.z);
-        
-        _input += _accWithNoise.x.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                  _accWithNoise.y.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                  _accWithNoise.z.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                  _angularVelocityWithNoise.x.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                  _angularVelocityWithNoise.y.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," +
-                  _angularVelocityWithNoise.z.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "\n";
         
         if (!float.IsNaN(_accWithNoise.x))
         {
@@ -184,20 +163,6 @@ public class PositionAgent : Agent
         
             _position.CalculatePosition();
         }
-        var statsRecorder = Academy.Instance.StatsRecorder;
-        statsRecorder.Add("Output/Acc/x", vectorAction[0]+1);
-        statsRecorder.Add("Output/Acc/y", vectorAction[1]+1);
-        statsRecorder.Add("Output/Acc/z", vectorAction[2]+1);
-        statsRecorder.Add("Output/AngularVelocity/x", vectorAction[3]+1);
-        statsRecorder.Add("Output/AngularVelocity/y", vectorAction[4]+1);
-        statsRecorder.Add("Output/AngularVelocity/z", vectorAction[5]+1);
-        
-        _output += vectorAction[0]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," +
-                   vectorAction[1]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                   vectorAction[2]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                   vectorAction[3]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                   vectorAction[4]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," +
-                   vectorAction[5]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "\n";
 
     }
 
@@ -290,14 +255,6 @@ public class PositionAgent : Agent
 
     public override void OnEpisodeBegin()
     {
-        if (_episodeIndex > -1)
-        {
-            System.IO.FileInfo file = new System.IO.FileInfo("Assets/Results/episode_" + _episodeIndex + "/input.csv");
-            file.Directory.Create();
-            System.IO.File.WriteAllText("Assets/Results/episode_" + _episodeIndex + "/input.csv", _input);
-            System.IO.File.WriteAllText("Assets/Results/episode_" + _episodeIndex + "/output.csv", _output);
-        }
-        _episodeIndex++;
         ResetEnvironment();
     }
 }
