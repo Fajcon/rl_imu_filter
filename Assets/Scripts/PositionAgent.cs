@@ -192,12 +192,12 @@ public class PositionAgent : Agent
         statsRecorder.Add("Output/AngularVelocity/y", vectorAction[4]+1);
         statsRecorder.Add("Output/AngularVelocity/z", vectorAction[5]+1);
         
-        _output += vectorAction[0]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," +
-                   vectorAction[1]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                   vectorAction[2]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                   vectorAction[3]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                   vectorAction[4]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," +
-                   vectorAction[5]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "\n";
+        _output += (vectorAction[0]+1).ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," +
+                   (vectorAction[1]+1).ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
+                   (vectorAction[2]+1).ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
+                   (vectorAction[3]+1).ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
+                   (vectorAction[4]+1).ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," +
+                   (vectorAction[5]+1).ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "\n";
 
     }
 
