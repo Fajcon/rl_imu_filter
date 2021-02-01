@@ -22,13 +22,13 @@ public class Position
         _estimateVelocity += ((_estimateRotation * EstimateBodyAcc)-g) * DT;
         _calculatedEstimatePosition += _estimateVelocity * DT;
 
-        _output += _calculatedEstimatePosition.x.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                   _calculatedEstimatePosition.y.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                   _calculatedEstimatePosition.z.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                   _estimateRotation.w.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                   _estimateRotation.x.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                   _estimateRotation.y.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," +
-                   _estimateRotation.z.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "\n";
+        _output += _calculatedEstimatePosition.x.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
+                   _calculatedEstimatePosition.y.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
+                   _calculatedEstimatePosition.z.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
+                   _estimateRotation.w.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
+                   _estimateRotation.x.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
+                   _estimateRotation.y.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," +
+                   _estimateRotation.z.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "\n";
     }
 
     public void SavePositionToFile()

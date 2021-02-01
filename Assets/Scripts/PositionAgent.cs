@@ -1,9 +1,9 @@
-﻿﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using Unity.MLAgents;
+using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
 using Random = System.Random;
@@ -103,7 +103,11 @@ public class PositionAgent : Agent
             {
                 _position.SavePositionToFile();
                 _index = 0;
-                UnityEditor.EditorApplication.isPlaying = false; //only in editor
+                
+                #if UNITY_EDITOR
+                    UnityEditor.EditorApplication.isPlaying = false; //only in editor
+                #endif
+
             }
             _accWithNoise = _accfromFile[_index];
             _angularVelocityWithNoise = _angularVelocityFromFile[_index];
@@ -145,12 +149,12 @@ public class PositionAgent : Agent
         statsRecorder.Add("Input/AngularVelocity/y", _angularVelocityWithNoise.y);
         statsRecorder.Add("Input/AngularVelocity/z", _angularVelocityWithNoise.z);
         
-        _input += _accWithNoise.x.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                  _accWithNoise.y.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                  _accWithNoise.z.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                  _angularVelocityWithNoise.x.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                  _angularVelocityWithNoise.y.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," +
-                  _angularVelocityWithNoise.z.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "\n";
+        _input += _accWithNoise.x.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
+                  _accWithNoise.y.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
+                  _accWithNoise.z.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
+                  _angularVelocityWithNoise.x.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
+                  _angularVelocityWithNoise.y.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," +
+                  _angularVelocityWithNoise.z.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "\n";
         
         if (!float.IsNaN(_accWithNoise.x))
         {
@@ -164,14 +168,14 @@ public class PositionAgent : Agent
         }
     }
 
-    public override void OnActionReceived(float[] vectorAction)
+    public override void OnActionReceived(ActionBuffers actionBuffers)
     {
-        var estimateBodyAcc = new Vector3(_accWithNoise.x * (vectorAction[0]+1), 
-            _accWithNoise.y * (vectorAction[1]+1), 
-            _accWithNoise.z * (vectorAction[2]+1));
-        var estimateAngularVelocity = new Vector3(_angularVelocityWithNoise.x * (vectorAction[3]+1), 
-            _angularVelocityWithNoise.y * (vectorAction[4]+1), 
-            _angularVelocityWithNoise.z * (vectorAction[5]+1));
+        var estimateBodyAcc = new Vector3(_accWithNoise.x * (actionBuffers.ContinuousActions[0]+1), 
+            _accWithNoise.y * (actionBuffers.ContinuousActions[1]+1), 
+            _accWithNoise.z * (actionBuffers.ContinuousActions[2]+1));
+        var estimateAngularVelocity = new Vector3(_angularVelocityWithNoise.x * (actionBuffers.ContinuousActions[3]+1), 
+            _angularVelocityWithNoise.y * (actionBuffers.ContinuousActions[4]+1), 
+            _angularVelocityWithNoise.z * (actionBuffers.ContinuousActions[5]+1));
         
         AddReward(-Vector3.Distance(_bodyAcc, estimateBodyAcc));
         AddReward(-Vector3.Distance(AngularVelocity, estimateAngularVelocity));
@@ -185,19 +189,19 @@ public class PositionAgent : Agent
             _position.CalculatePosition();
         }
         var statsRecorder = Academy.Instance.StatsRecorder;
-        statsRecorder.Add("Output/Acc/x", vectorAction[0]+1);
-        statsRecorder.Add("Output/Acc/y", vectorAction[1]+1);
-        statsRecorder.Add("Output/Acc/z", vectorAction[2]+1);
-        statsRecorder.Add("Output/AngularVelocity/x", vectorAction[3]+1);
-        statsRecorder.Add("Output/AngularVelocity/y", vectorAction[4]+1);
-        statsRecorder.Add("Output/AngularVelocity/z", vectorAction[5]+1);
+        statsRecorder.Add("Output/Acc/x", actionBuffers.ContinuousActions[0]+1);
+        statsRecorder.Add("Output/Acc/y", actionBuffers.ContinuousActions[1]+1);
+        statsRecorder.Add("Output/Acc/z", actionBuffers.ContinuousActions[2]+1);
+        statsRecorder.Add("Output/AngularVelocity/x", actionBuffers.ContinuousActions[3]+1);
+        statsRecorder.Add("Output/AngularVelocity/y", actionBuffers.ContinuousActions[4]+1);
+        statsRecorder.Add("Output/AngularVelocity/z", actionBuffers.ContinuousActions[5]+1);
         
-        _output += vectorAction[0]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," +
-                   vectorAction[1]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                   vectorAction[2]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                   vectorAction[3]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
-                   vectorAction[4]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "," +
-                   vectorAction[5]+1.ToString("0.0000000000", System.Globalization.CultureInfo.InvariantCulture) + "\n";
+        _output += (actionBuffers.ContinuousActions[0]+1).ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," +
+                   (actionBuffers.ContinuousActions[1]+1).ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
+                   (actionBuffers.ContinuousActions[2]+1).ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
+                   (actionBuffers.ContinuousActions[3]+1).ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," + 
+                   (actionBuffers.ContinuousActions[4]+1).ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "," +
+                   (actionBuffers.ContinuousActions[5]+1).ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture) + "\n";
 
     }
 
@@ -283,11 +287,7 @@ public class PositionAgent : Agent
         double y1 = Math.Sqrt(-2.0 * Math.Log(x1)) * Math.Cos(2.0 * Math.PI * x2);
         return y1 * stddev + mean; 
     }
-
-    public override void Heuristic(float[] actionsOut)
-    {
-    }
-
+    
     public override void OnEpisodeBegin()
     {
         if (_episodeIndex > -1)
